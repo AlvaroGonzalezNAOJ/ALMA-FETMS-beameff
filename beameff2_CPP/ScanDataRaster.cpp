@@ -384,7 +384,8 @@ float ScanDataRaster::calcPhaseEfficiency(float p[], float azNominal, float elNo
 
         // radius is sqrt(pow(azOnSub, 2.0) + pow(elOnSub, 2.0));
         //   so radiusSq = Az^2 + El^2:
-        radiusSq = pow(RadiusArray_m[i], 2.0);
+        // radiusSq is not used if the exact expressions of phase are used
+        //radiusSq = pow(RadiusArray_m[i], 2.0); 
 
         // maskE is electric field voltage on the subreflector:
         maskE = MaskArray_m[i] * EArray_m[i];
@@ -416,10 +417,15 @@ float ScanDataRaster::calcPhaseEfficiency(float p[], float azNominal, float elNo
         //   -kr= -k(delta_x*Az + delta_y*El - delta_z*(Az^2+El^2)/2)
 
         // p[1], p[2], p[3] are delta_x, delta_y, and delta_z:
-        phaseFit = p[1] * Az + p[2] * El + p[3] * radiusSq / 2.0;
+        
+        //AG: this is the exact expression without approximations
+        // The variable radiusSq is not used any more and I "commented it" above
+        // Notice than in the line before my last modification there was a typo p[3]*radiusSq/2 must have a minus sign
+        phaseFit = p[1] * sin(Az)*cos(El) + p[2] *sin(El) + p[3] *cos(Az)*cos(El);
 
         // error between measured phase and fit phase:
-        phaseErr = phaseRad - phaseFit;
+        // This must be an addition to get an effective subtraction --=+ or phaseFit can be -PhaseFit and use a -
+        phaseErr = phaseRad + phaseFit;
 
         // accumulate the cos, sin, and total E field sums:
         costerm += maskE * cos(phaseErr);
